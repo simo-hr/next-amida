@@ -21,12 +21,39 @@ type VerticalLine = {
 }
 
 const drawLine = (ctx: CanvasRenderingContext2D, color: string, x1: number, y1: number, x2: number, y2: number) => {
-  console.log('drawLine:', x1, y1, x2, y2)
   ctx.beginPath()
   ctx.moveTo(x1, y1)
   ctx.lineTo(x2, y2)
   ctx.strokeStyle = color
   ctx.stroke()
+}
+const drawAnimatedLine = (
+  ctx: CanvasRenderingContext2D,
+  color: string,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  duration: number = 500
+): Promise<void> => {
+  return new Promise((resolve) => {
+    let startTime: number | null = null
+    const animate = (currentTime: number) => {
+      if (startTime === null) {
+        startTime = currentTime
+      }
+
+      const elapsedTime = currentTime - startTime
+      const progress = Math.min(elapsedTime / duration, 1)
+      const currentX = x1 + (x2 - x1) * progress
+      const currentY = y1 + (y2 - y1) * progress
+      drawLine(ctx, color, x1, y1, currentX, currentY)
+
+      progress < 1 ? requestAnimationFrame(animate) : resolve()
+    }
+
+    requestAnimationFrame(animate)
+  })
 }
 const drawAmidakuji = (
   ctx: CanvasRenderingContext2D
@@ -49,7 +76,7 @@ const drawAmidakuji = (
   return { horizontalLines, verticalLines }
 }
 
-const runAmidakuji = (
+const runAmidakuji = async (
   ctx: CanvasRenderingContext2D,
   startLine: VerticalLine,
   horizontalLines: HorizontalLine[],
@@ -59,28 +86,28 @@ const runAmidakuji = (
   let currentY = startLine.y1
   let currentVerticalLine = startLine
   while (true) {
-    const horizontalLine = horizontalLines.find((line) => {
-      return (currentX === line.x1 || currentX === line.x2) && line.y > currentY
-    })
+    const horizontalLine = horizontalLines.find(
+      (line) => (currentX === line.x1 || currentX === line.x2) && line.y > currentY
+    )
 
     if (!horizontalLine) {
-      drawLine(ctx, 'red', currentX, currentY, currentX, currentVerticalLine.y2)
+      await drawAnimatedLine(ctx, 'red', currentX, currentY, currentX, currentVerticalLine.y2)
       break
     }
 
-    drawLine(ctx, 'red', currentX, currentY, currentX, horizontalLine.y)
+    await drawAnimatedLine(ctx, 'red', currentX, currentY, currentX, horizontalLine.y)
     if (currentX === horizontalLine.x1) {
-      drawLine(ctx, 'red', currentX, horizontalLine.y, horizontalLine.x2, horizontalLine.y)
+      await drawAnimatedLine(ctx, 'red', currentX, horizontalLine.y, horizontalLine.x2, horizontalLine.y)
       currentX = horizontalLine.x2
     } else if (currentX === horizontalLine.x2) {
-      drawLine(ctx, 'red', currentX, horizontalLine.y, horizontalLine.x1, horizontalLine.y)
+      await drawAnimatedLine(ctx, 'red', currentX, horizontalLine.y, horizontalLine.x1, horizontalLine.y)
       currentX = horizontalLine.x1
     }
     currentY = horizontalLine.y
     currentVerticalLine = verticalLines.find((line) => line.x === currentX)!
 
     if (currentY === currentVerticalLine.y2 - LINE_SPACING) {
-      drawLine(ctx, 'red', currentX, currentY, currentX, currentVerticalLine.y2)
+      await drawAnimatedLine(ctx, 'red', currentX, currentY, currentX, currentVerticalLine.y2)
       break
     }
   }
