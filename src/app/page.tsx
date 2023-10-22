@@ -1,17 +1,18 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react'
 import MultiLineInput from './components/MultiLineInput'
-import { CANVAS_HEIGHT, HORIZONTAL_LINES, START_X, START_Y, LINE_LENGTH, LINE_SPACING } from '../const'
-import { HorizontalLine, VerticalLine } from '../types'
+import { CANVAS_HEIGHT, HORIZONTAL_LINES, START_X, START_Y, LINE_LENGTH, LINE_SPACING } from './const'
+import { HorizontalLine, VerticalLine } from './types'
 
 const drawLine = (ctx: CanvasRenderingContext2D, color: string, x1: number, y1: number, x2: number, y2: number) => {
   ctx.beginPath()
   ctx.lineWidth = 3
+  ctx.strokeStyle = color
   ctx.moveTo(x1, y1)
   ctx.lineTo(x2, y2)
-  ctx.strokeStyle = color
   ctx.stroke()
 }
+
 const drawAnimatedLine = (
   ctx: CanvasRenderingContext2D,
   color: string,
@@ -40,6 +41,7 @@ const drawAnimatedLine = (
     requestAnimationFrame(animate)
   })
 }
+
 const drawAmidakuji = (
   ctx: CanvasRenderingContext2D,
   _goalList: string[]
@@ -47,7 +49,7 @@ const drawAmidakuji = (
   const verticalLines: VerticalLine[] = []
   const goalList = _goalList.filter((goal) => goal !== '')
   ctx.font = '16px Roboto medium'
-  ctx.fillStyle = '#0069b3'
+  ctx.fillStyle = 'gray'
   for (let i = 0; i < goalList.length; i++) {
     const x = START_X + i * LINE_SPACING
     drawLine(ctx, 'gray', x, START_Y, x, START_Y + LINE_LENGTH)
