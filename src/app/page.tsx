@@ -1,27 +1,12 @@
 'use client'
-
-import React, { useEffect, useRef } from 'react'
-
-const VERTICAL_LINES = 10
-const HORIZONTAL_LINES = 40
-const START_X = 50
-const START_Y = 50
-const LINE_LENGTH = 600
-const LINE_SPACING = 100
-
-type HorizontalLine = {
-  y: number
-  x1: number
-  x2: number
-}
-type VerticalLine = {
-  x: number
-  y1: number
-  y2: number
-}
+import React, { useEffect, useRef, useState } from 'react'
+import MultiLineInput from './components/MultiLineInput'
+import { CANVAS_HEIGHT, HORIZONTAL_LINES, START_X, START_Y, LINE_LENGTH, LINE_SPACING } from '../const'
+import { HorizontalLine, VerticalLine } from '../types'
 
 const drawLine = (ctx: CanvasRenderingContext2D, color: string, x1: number, y1: number, x2: number, y2: number) => {
   ctx.beginPath()
+  ctx.lineWidth = 3
   ctx.moveTo(x1, y1)
   ctx.lineTo(x2, y2)
   ctx.strokeStyle = color
@@ -34,7 +19,7 @@ const drawAnimatedLine = (
   y1: number,
   x2: number,
   y2: number,
-  duration: number = 500
+  duration: number = 200
 ): Promise<void> => {
   return new Promise((resolve) => {
     let startTime: number | null = null
@@ -56,21 +41,28 @@ const drawAnimatedLine = (
   })
 }
 const drawAmidakuji = (
-  ctx: CanvasRenderingContext2D
+  ctx: CanvasRenderingContext2D,
+  _goalList: string[]
 ): { horizontalLines: HorizontalLine[]; verticalLines: VerticalLine[] } => {
   const verticalLines: VerticalLine[] = []
-  for (let i = 0; i < VERTICAL_LINES; i++) {
+  const goalList = _goalList.filter((goal) => goal !== '')
+  ctx.font = '16px Roboto medium'
+  ctx.fillStyle = '#0069b3'
+  for (let i = 0; i < goalList.length; i++) {
     const x = START_X + i * LINE_SPACING
-    drawLine(ctx, 'black', x, START_Y, x, START_Y + LINE_LENGTH)
+    drawLine(ctx, 'gray', x, START_Y, x, START_Y + LINE_LENGTH)
+    const text = goalList[i]
+    const textWidth = ctx.measureText(text).width
+    ctx.fillText(text, x - textWidth / 2, START_Y + LINE_LENGTH + 20)
     verticalLines.push({ x, y1: START_Y, y2: START_Y + LINE_LENGTH })
   }
 
   const horizontalLines = []
   for (let i = 1; i < HORIZONTAL_LINES; i++) {
     const y = START_Y + (i * LINE_LENGTH) / HORIZONTAL_LINES
-    const x1 = START_X + Math.floor(Math.random() * (VERTICAL_LINES - 1)) * LINE_SPACING
+    const x1 = START_X + Math.floor(Math.random() * (goalList.length - 1)) * LINE_SPACING
     const x2 = x1 + LINE_SPACING
-    drawLine(ctx, 'black', x1, y, x2, y)
+    drawLine(ctx, 'gray', x1, y, x2, y)
     horizontalLines.push({ y, x1, x2 })
   }
   return { horizontalLines, verticalLines }
@@ -82,9 +74,7 @@ const runAmidakuji = async (
   horizontalLines: HorizontalLine[],
   verticalLines: VerticalLine[]
 ) => {
-  let currentX = startLine.x
-  let currentY = startLine.y1
-  let currentVerticalLine = startLine
+  let [currentX, currentY, currentVerticalLine] = [startLine.x, startLine.y1, startLine]
   while (true) {
     const horizontalLine = horizontalLines.find(
       (line) => (currentX === line.x1 || currentX === line.x2) && line.y > currentY
@@ -114,39 +104,72 @@ const runAmidakuji = async (
 }
 
 export default function Home() {
+  // const [inputList, setInputList] = useState<string[]>([''])
+  const [inputList, setInputList] = useState<string[]>([
+    '下川',
+    '下川',
+    '下川',
+    '下川',
+    '下川',
+    '下川',
+    '下川',
+    '下川',
+    '下川',
+    '下川',
+    '下川',
+  ])
+
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const horizontalLinesRef = useRef<HorizontalLine[]>([])
   const verticalLinesRef = useRef<VerticalLine[]>([])
+
+  const reset = () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.fillStyle = '#fff'
+      ctx.fillRect(0, 0, 1200, CANVAS_HEIGHT)
+    }
+    setInputList(inputList.filter((text) => text !== ''))
+    horizontalLinesRef.current = []
+    verticalLinesRef.current = []
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     canvas.width = 1200
-    canvas.height = 1200
+    canvas.height = CANVAS_HEIGHT
     const ctx = canvas.getContext('2d')
     if (ctx) {
       ctx.fillStyle = '#fff'
-      ctx.fillRect(0, 0, 1200, 1200)
-      const { horizontalLines, verticalLines } = drawAmidakuji(ctx)
-      horizontalLinesRef.current = horizontalLines
-      verticalLinesRef.current = verticalLines
+      ctx.fillRect(0, 0, CANVAS_HEIGHT, 1200)
     }
   }, [])
 
+  const handleDrawAmida = (e: any) => {
+    reset()
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext('2d')!
+    const { horizontalLines, verticalLines } = drawAmidakuji(ctx, inputList)
+    horizontalLinesRef.current = horizontalLines
+    verticalLinesRef.current = verticalLines
+  }
+
   const handleClick = (e: any) => {
     if (!canvasRef.current) return
-    runAmidakuji(
-      canvasRef.current.getContext('2d')!,
-      verticalLinesRef.current[0],
-      horizontalLinesRef.current,
-      verticalLinesRef.current
-    )
+    const startLine = verticalLinesRef.current[Math.floor(Math.random() * inputList.length)]
+    runAmidakuji(canvasRef.current.getContext('2d')!, startLine, horizontalLinesRef.current, verticalLinesRef.current)
   }
 
   return (
     <div>
-      <h1>あみだくじツール</h1>
-      <canvas ref={canvasRef} width={600} height={600} onClick={handleClick}></canvas>
+      <h2>公正なあみだくじ</h2>
+      <MultiLineInput inputList={inputList} setInputList={setInputList} />
+      <button onClick={handleDrawAmida}>あみだくじを生成</button>
+      <button onClick={handleClick}>START</button>
+      <canvas ref={canvasRef} width={CANVAS_HEIGHT} height={600}></canvas>
     </div>
   )
 }
