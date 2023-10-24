@@ -1,8 +1,9 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react'
-import MultiLineInput from './components/MultiLineInput'
-import { CANVAS_HEIGHT, HORIZONTAL_LINES, START_X, START_Y, LINE_LENGTH, LINE_SPACING } from './const'
-import { HorizontalLine, VerticalLine } from './types'
+import MultiLineInput from '@/app/_components/MultiLineInput'
+import { CANVAS_HEIGHT, HORIZONTAL_LINES, START_X, START_Y, LINE_LENGTH, LINE_SPACING } from '@/app/const'
+import { HorizontalLine, VerticalLine } from '@/app/types'
+import Button from '@/app/_components/Button'
 
 const drawLine = (ctx: CanvasRenderingContext2D, color: string, x1: number, y1: number, x2: number, y2: number) => {
   ctx.beginPath()
@@ -120,10 +121,22 @@ export default function Home() {
     '下川',
     '下川',
   ])
-
+  const [isRunning, setIsRunning] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const horizontalLinesRef = useRef<HorizontalLine[]>([])
   const verticalLinesRef = useRef<VerticalLine[]>([])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    canvas.width = 1200
+    canvas.height = CANVAS_HEIGHT
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.fillStyle = '#fff'
+      ctx.fillRect(0, 0, CANVAS_HEIGHT, 1200)
+    }
+  }, [])
 
   const reset = () => {
     const canvas = canvasRef.current
@@ -138,19 +151,7 @@ export default function Home() {
     verticalLinesRef.current = []
   }
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    canvas.width = 1200
-    canvas.height = CANVAS_HEIGHT
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      ctx.fillStyle = '#fff'
-      ctx.fillRect(0, 0, CANVAS_HEIGHT, 1200)
-    }
-  }, [])
-
-  const handleDrawAmida = (e: any) => {
+  const handleDrawAmida = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     reset()
     const canvas = canvasRef.current
     const ctx = canvas?.getContext('2d')!
@@ -159,19 +160,32 @@ export default function Home() {
     verticalLinesRef.current = verticalLines
   }
 
-  const handleClick = (e: any) => {
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     if (!canvasRef.current) return
+    setIsRunning(true)
     const startLine = verticalLinesRef.current[Math.floor(Math.random() * inputList.length)]
-    runAmidakuji(canvasRef.current.getContext('2d')!, startLine, horizontalLinesRef.current, verticalLinesRef.current)
+    await runAmidakuji(
+      canvasRef.current.getContext('2d')!,
+      startLine,
+      horizontalLinesRef.current,
+      verticalLinesRef.current
+    )
+    setIsRunning(false)
   }
 
   return (
-    <div>
+    <div className="container">
       <h2>公正なあみだくじ</h2>
       <MultiLineInput inputList={inputList} setInputList={setInputList} />
-      <button onClick={handleDrawAmida}>あみだくじを生成</button>
-      <button onClick={handleClick}>START</button>
-      <canvas ref={canvasRef} width={CANVAS_HEIGHT} height={600}></canvas>
+      <div className="button-container">
+        <Button disabled={isRunning} onClick={handleDrawAmida}>
+          あみだくじを生成
+        </Button>
+        <Button disabled={isRunning} onClick={handleClick}>
+          START
+        </Button>
+      </div>
+      <canvas ref={canvasRef} width={1200} height={CANVAS_HEIGHT}></canvas>
     </div>
   )
 }
