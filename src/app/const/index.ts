@@ -1,3 +1,4 @@
+export const DEFAULT_CANVAS_HEIGHT = 1200
 export const CANVAS_HEIGHT = 800
 export const HORIZONTAL_LINES = 80
 export const START_X = 50

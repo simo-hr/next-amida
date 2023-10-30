@@ -1,7 +1,15 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react'
 import MultiLineInput from '@/app/_components/MultiLineInput'
-import { CANVAS_HEIGHT, HORIZONTAL_LINES, START_X, START_Y, LINE_LENGTH, LINE_SPACING } from '@/app/const'
+import {
+  DEFAULT_CANVAS_HEIGHT,
+  CANVAS_HEIGHT,
+  HORIZONTAL_LINES,
+  START_X,
+  START_Y,
+  LINE_LENGTH,
+  LINE_SPACING,
+} from '@/app/const'
 import { HorizontalLine, VerticalLine } from '@/app/types'
 import Button from '@/app/_components/Button'
 
@@ -129,12 +137,12 @@ export default function Home() {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    canvas.width = 1200
+    canvas.width = DEFAULT_CANVAS_HEIGHT
     canvas.height = CANVAS_HEIGHT
     const ctx = canvas.getContext('2d')
     if (ctx) {
       ctx.fillStyle = '#fff'
-      ctx.fillRect(0, 0, CANVAS_HEIGHT, 1200)
+      ctx.fillRect(0, 0, CANVAS_HEIGHT, DEFAULT_CANVAS_HEIGHT)
     }
   }, [])
 
@@ -144,7 +152,7 @@ export default function Home() {
     const ctx = canvas.getContext('2d')
     if (ctx) {
       ctx.fillStyle = '#fff'
-      ctx.fillRect(0, 0, 1200, CANVAS_HEIGHT)
+      ctx.fillRect(0, 0, DEFAULT_CANVAS_HEIGHT, CANVAS_HEIGHT)
     }
     setInputList(inputList.filter((text) => text !== ''))
     horizontalLinesRef.current = []
@@ -185,7 +193,7 @@ export default function Home() {
           START
         </Button>
       </div>
-      <canvas ref={canvasRef} width={1200} height={CANVAS_HEIGHT}></canvas>
+      <canvas ref={canvasRef} width={DEFAULT_CANVAS_HEIGHT} height={CANVAS_HEIGHT}></canvas>
     </div>
   )
 }
